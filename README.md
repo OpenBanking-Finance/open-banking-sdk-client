@@ -1,54 +1,41 @@
-# Open Banking Client SDK (@open-bank/sdk-client) 🚀
+# Open Banking Client Adapter 📲🛡️
 
-A lightweight JavaScript SDK for **FinTechs, Portals, and Third-Party Providers (TPPs)** to easily connect to the Open Banking Hub.
+The **Open Banking Client Adapter** is a specialized gateway service for FinTech applications and Third-Party Providers (TPPs). It acts as a secure intermediary between your front-end (Web/Mobile) and the Open Banking Hub.
 
-This SDK abstracts the complexities of the Open Banking API, allowing you to quickly build financial applications that fetch bank directories, initiate consent flows, and retrieve account/transaction data.
+## Why use a Client Adapter?
 
-## 📦 Installation
+1.  **Security**: Keeps sensitive Hub communication logic on the server-side.
+2.  **Abstraction**: Simplifies complex Hub API calls into clean endpoints for your App.
+3.  **Portability**: Allows multiple front-ends (iOS, Android, Web) to use a single unified gateway.
 
-Since this package is part of the `open-bank` monorepo, you can link it locally or install it via your package manager when published.
+## 📦 Setup
 
+### 1. Install Dependencies
 ```bash
-npm install @open-bank/sdk-client
+cd sdk-client
+npm install
 ```
 
-## 🛠️ Usage Example
-
-Here is how you can use the SDK in your web application:
-
-```javascript
-import { OpenBankingClient } from '@open-bank/sdk-client';
-
-// 1. Initialize the SDK with the Hub URL
-const obClient = new OpenBankingClient({
-    hubUrl: 'http://127.0.0.1:3000'
-});
-
-// 2. Fetch available banks
-const banks = await obClient.getBanks();
-console.log('Available Banks:', banks);
-
-// 3. Initiate consent (Redirect user to bank)
-const { redirect_url } = await obClient.createConsent(banks[0].id);
-window.location.href = redirect_url;
-
-// ... After the user returns from the bank with a `consentId` ...
-
-// 4. Fetch accounts using the consentId
-const data = await obClient.getAccounts('received_consent_id');
-console.log('User Accounts:', data.accounts);
-
-// 5. Fetch transactions for a specific account
-const txData = await obClient.getTransactions(data.accounts[0].id, 'received_consent_id');
-console.log('Transactions:', txData.transactions);
+### 2. Configure Environment
+Create a `.env` file:
+```env
+CLIENT_ADAPTER_PORT=4000
+HUB_URL=http://your-hub-url:3000
 ```
 
-## 🔐 API Reference
+### 3. Start the Adapter
+```bash
+npm start
+```
 
-- `getBanks()`: Returns an array of registered banks.
-- `createConsent(bankId, permissions)`: Starts the authorization flow.
-- `getAccounts(consentId)`: Fetches authorized accounts.
-- `getTransactions(accountId, consentId)`: Fetches transactions for an account.
+## 🛠️ API Reference (For your App)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/banks` | GET | List available banks from the Hub Directory. |
+| `/api/connect` | POST | Initiate a consent flow (Returns a `redirect_url`). |
+| `/api/accounts` | GET | Fetch authorized accounts (Requires `consentId`). |
+| `/api/accounts/:id/transactions` | GET | Fetch transaction history for an account. |
 
 ## 📄 License
 Apache-2.0
