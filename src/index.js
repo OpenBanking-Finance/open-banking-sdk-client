@@ -18,49 +18,37 @@ app.use(express.json());
 
 // 1. List available banks from Hub
 app.get('/api/banks', async (req, res) => {
-    console.log('GET /api/banks - Fetching banks from Hub...');
     try {
         const response = await axios.get(`${HUB_URL}/banks`);
-        console.log(`GET /api/banks - Success: ${response.data.length} banks found`);
         res.json(response.data);
     } catch (err) {
-        console.error(`GET /api/banks - Error connecting to Hub at ${HUB_URL}:`, err.message);
-        res.status(502).json({ error: 'Hub communication failed', details: err.message });
+        res.status(502).json({ error: 'Hub communication failed' });
     }
 });
 
 // 2. Initiate Consent Flow
 app.post('/api/connect', async (req, res) => {
     const { bankId, permissions } = req.body;
-    console.log(`POST /api/connect - Initiating consent for bank: ${bankId}`);
     try {
         const response = await axios.post(`${HUB_URL}/consents`, {
             bank_id: bankId,
             permissions: permissions || ['ACCOUNTS_READ', 'TRANSACTIONS_READ']
         });
-        console.log(`POST /api/connect - Consent created successfully. ID: ${response.data.id}`);
         res.json(response.data); // Returns { redirect_url, id }
     } catch (err) {
-        console.error(`POST /api/connect - Error creating consent at Hub:`, err.message);
-        if (err.response) {
-            console.error('Hub Response Error:', err.response.data);
-        }
-        res.status(502).json({ error: 'Failed to create consent at Hub', details: err.message });
+        res.status(502).json({ error: 'Failed to create consent at Hub' });
     }
 });
 
 // 3. Get Accounts (Proxy)
 app.get('/api/accounts', async (req, res) => {
     const { consentId } = req.query;
-    console.log(`GET /api/accounts - Fetching accounts for consentId: ${consentId}`);
     if (!consentId) return res.status(400).json({ error: 'consentId required' });
 
     try {
         const response = await axios.get(`${HUB_URL}/accounts?consentId=${consentId}`);
-        console.log(`GET /api/accounts - Success: ${response.data.length || 1} accounts found`);
         res.json(response.data);
     } catch (err) {
-        console.error(`GET /api/accounts - Error:`, err.message);
         res.status(err.response?.status || 502).json(err.response?.data || { error: 'Communication error' });
     }
 });
@@ -69,15 +57,50 @@ app.get('/api/accounts', async (req, res) => {
 app.get('/api/accounts/:accountId/transactions', async (req, res) => {
     const { accountId } = req.params;
     const { consentId } = req.query;
-    console.log(`GET /api/transactions - Fetching transactions for account: ${accountId}`);
 
     try {
         const response = await axios.get(`${HUB_URL}/accounts/${accountId}/transactions?consentId=${consentId}`);
-        console.log(`GET /api/transactions - Success: ${response.data.length || 0} transactions found`);
         res.json(response.data);
     } catch (err) {
-        console.error(`GET /api/transactions - Error:`, err.message);
         res.status(502).json({ error: 'Communication error' });
+    }
+});
+
+// 5. Iniciar Transferência (Passo 1)
+app.post('/api/transfers', async (req, res) => {
+    const { consentId, amount, currency, debtorAccount, creditorAccount, creditorName } = req.body;
+    if (!consentId || !amount || !creditorAccount || !creditorName) {
+        return res.status(400).json({ error: 'consentId, amount, creditorAccount and creditorName are required' });
+    }
+    try {
+        const response = await axios.post(`${HUB_URL}/transfers`, {
+            consentId, amount, currency, debtorAccount, creditorAccount, creditorName
+        });
+        res.status(201).json(response.data);
+    } catch (err) {
+        res.status(err.response?.status || 502).json(err.response?.data || { error: 'Hub communication failed' });
+    }
+});
+
+// 6. Confirmar Destinatário (Passo 2)
+app.put('/api/transfers/:id/confirm-party', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const response = await axios.put(`${HUB_URL}/transfers/${id}/confirm-party`);
+        res.json(response.data);
+    } catch (err) {
+        res.status(err.response?.status || 502).json(err.response?.data || { error: 'Hub communication failed' });
+    }
+});
+
+// 7. Confirmar Cotação e Executar (Passo 3)
+app.put('/api/transfers/:id/confirm-quote', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const response = await axios.put(`${HUB_URL}/transfers/${id}/confirm-quote`);
+        res.json(response.data);
+    } catch (err) {
+        res.status(err.response?.status || 502).json(err.response?.data || { error: 'Hub communication failed' });
     }
 });
 
