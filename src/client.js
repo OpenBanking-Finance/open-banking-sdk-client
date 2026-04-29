@@ -4,13 +4,30 @@ export class OpenBankingClient {
   }
 
   async _fetch(path, options = {}) {
-    const res = await fetch(`${this.baseUrl}${path}`, {
-      headers: { 'Content-Type': 'application/json', ...options.headers },
-      ...options
-    })
-    const data = await res.json()
-    if (!res.ok) throw Object.assign(new Error(data.error || 'Request failed'), { status: res.status, data })
-    return data
+    const url = `${this.baseUrl}${path}`
+    const method = options.method || 'GET'
+    console.log(`[SDK] Request: ${method} ${url}`)
+    
+    try {
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...options.headers },
+        ...options
+      })
+      
+      console.log(`[SDK] Response Status: ${res.status} (${res.ok ? 'OK' : 'Error'})`)
+      
+      const data = await res.json()
+      if (!res.ok) {
+        console.error(`[SDK] Request Failed:`, data)
+        throw Object.assign(new Error(data.error || 'Request failed'), { status: res.status, data })
+      }
+      return data
+    } catch (err) {
+      if (err.name === 'FetchError' || err.message.includes('fetch')) {
+        console.error(`[SDK] Network/Connection Error: ${err.message}`)
+      }
+      throw err
+    }
   }
 
   getBanks() {
