@@ -1,10 +1,12 @@
+version: '3.8'
+
 services:
-  client-adapter:
+  sdk-client:
     build: .
-    container_name: openbanking_client_adapter
+    container_name: ob_sdk_client
     ports:
-      - "4000:4000"
+      - "${CLIENT_ADAPTER_PORT:-4000}:${CLIENT_ADAPTER_PORT:-4000}"
     environment:
-      - CLIENT_ADAPTER_PORT=4000
-      - HUB_URL=http://host.docker.internal:3000
-    restart: always
+      CLIENT_ADAPTER_PORT: ${CLIENT_ADAPTER_PORT:-4000}
+      HUB_URL: ${HUB_URL:-http://host.docker.internal:3000}
+    restart: unless-stopped
