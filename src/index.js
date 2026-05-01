@@ -83,16 +83,18 @@ app.get('/api/accounts/:accountId/transactions', async (req, res) => {
 
 // 5. Iniciar Transferência (Passo 1)
 app.post('/api/transfers', async (req, res) => {
-    const { consentId, amount, currency, debtorAccount, creditorAccount, creditorName } = req.body;
-    console.log(`[Adapter] POST /api/transfers - Initiating transfer of ${amount} ${currency} to ${creditorName}`);
-    
-    if (!consentId || !amount || !creditorAccount || !creditorName) {
+    const { consentId, amount, currency, debtorAccount, creditorAccount, creditorName, creditorIdType } = req.body;
+    console.log(`[Adapter] POST /api/transfers - Initiating transfer of ${amount} ${currency} to ${creditorName} (idType=${creditorIdType || 'MSISDN'})`);
+
+    if (!consentId || !amount || !creditorAccount) {
         console.warn('[Adapter] Missing required transfer parameters');
-        return res.status(400).json({ error: 'consentId, amount, creditorAccount and creditorName are required' });
+        return res.status(400).json({ error: 'consentId, amount and creditorAccount are required' });
     }
     try {
         const response = await axios.post(`${HUB_URL}/transfers`, {
-            consentId, amount, currency, debtorAccount, creditorAccount, creditorName
+            consentId, amount, currency, debtorAccount,
+            creditorAccount, creditorName: creditorName || creditorAccount,
+            creditorIdType: creditorIdType || 'MSISDN',
         });
         console.log(`[Adapter] Transfer created successfully. Hub ID: ${response.data.id}`);
         res.status(201).json(response.data);
