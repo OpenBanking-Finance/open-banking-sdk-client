@@ -177,7 +177,7 @@ Fetches transaction history for an account.
 
 ### `POST /api/transfers` — Step 1: Initiate
 
-Starts a Mojaloop 3-step transfer. Requires `PAYMENTS_WRITE` in the consent permissions.
+Starts a Mojaloop 3-step transfer. Requires `PAYMENTS_WRITE` in the user's granted permissions.
 
 **Request body**
 ```json
@@ -187,7 +187,8 @@ Starts a Mojaloop 3-step transfer. Requires `PAYMENTS_WRITE` in the consent perm
   "currency": "CVE",
   "debtorAccount": "acc-alpha-001",
   "creditorAccount": "acc-beta-002",
-  "creditorName": "Maria Souza"
+  "creditorName": "Maria Souza",
+  "creditorIdType": "MSISDN"
 }
 ```
 
@@ -197,8 +198,9 @@ Starts a Mojaloop 3-step transfer. Requires `PAYMENTS_WRITE` in the consent perm
 | `amount` | yes | Transfer amount |
 | `currency` | no | Defaults to `CVE` |
 | `debtorAccount` | yes | Source account ID |
-| `creditorAccount` | yes | Destination account ID |
+| `creditorAccount` | yes | Destination account ID or identifier |
 | `creditorName` | yes | Recipient display name |
+| `creditorIdType` | no | `MSISDN` (default), `ACCOUNT_ID`, or `BUSINESS` |
 
 **Proxied Hub request:** `POST {HUB_URL}/transfers`
 
@@ -214,6 +216,19 @@ Starts a Mojaloop 3-step transfer. Requires `PAYMENTS_WRITE` in the consent perm
     "fspId": "mock-bank-fsp"
   }
 }
+```
+
+---
+
+### `DELETE /api/consents/:id` — Revoke Consent
+
+Revokes an active consent. Only works for consents in `AWAITING_AUTHORISATION` or `AUTHORISED` status.
+
+**Proxied Hub request:** `DELETE {HUB_URL}/consents/{id}`
+
+**Response `200`**
+```json
+{ "id": "e8a90abf-...", "status": "REVOKED" }
 ```
 
 ---

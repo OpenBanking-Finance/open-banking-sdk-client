@@ -81,7 +81,7 @@ app.get('/api/accounts/:accountId/transactions', async (req, res) => {
     }
 });
 
-// 5. Iniciar Transferência (Passo 1)
+// 5. Initiate Transfer (Step 1)
 app.post('/api/transfers', async (req, res) => {
     const { consentId, amount, currency, debtorAccount, creditorAccount, creditorName, creditorIdType } = req.body;
     console.log(`[Adapter] POST /api/transfers - Initiating transfer of ${amount} ${currency} to ${creditorName} (idType=${creditorIdType || 'MSISDN'})`);
@@ -104,7 +104,20 @@ app.post('/api/transfers', async (req, res) => {
     }
 });
 
-// 6. Confirmar Destinatário (Passo 2)
+// 5b. Revoke Consent
+app.delete('/api/consents/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log(`[Adapter] DELETE /api/consents/${id} - Revoking consent`);
+    try {
+        const response = await axios.delete(`${HUB_URL}/consents/${id}`);
+        res.json(response.data);
+    } catch (err) {
+        console.error(`[Adapter] Hub communication failed while revoking consent ${id}:`, err.message);
+        res.status(err.response?.status || 502).json(err.response?.data || { error: 'Hub communication failed' });
+    }
+});
+
+// 6. Confirm Recipient (Step 2)
 app.put('/api/transfers/:id/confirm-party', async (req, res) => {
     const { id } = req.params;
     console.log(`[Adapter] PUT /api/transfers/${id}/confirm-party - Confirming recipient`);
@@ -118,7 +131,7 @@ app.put('/api/transfers/:id/confirm-party', async (req, res) => {
     }
 });
 
-// 7. Confirmar Cotação e Executar (Passo 3)
+// 7. Confirm Quote and Execute (Step 3)
 app.put('/api/transfers/:id/confirm-quote', async (req, res) => {
     const { id } = req.params;
     console.log(`[Adapter] PUT /api/transfers/${id}/confirm-quote - Confirming quote and executing`);
