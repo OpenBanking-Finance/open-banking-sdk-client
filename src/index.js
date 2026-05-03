@@ -104,7 +104,24 @@ app.post('/api/transfers', async (req, res) => {
     }
 });
 
+<<<<<<< Updated upstream
 // 5b. Revoke Consent
+=======
+// 5b. Get Consent (permissions + selected accounts)
+app.get('/api/consents/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log(`[Adapter] GET /api/consents/${id} - Fetching consent details`);
+    try {
+        const response = await axios.get(`${HUB_URL}/consents/${id}`);
+        res.json(response.data);
+    } catch (err) {
+        console.error(`[Adapter] Hub communication failed while fetching consent ${id}:`, err.message);
+        res.status(err.response?.status || 502).json(err.response?.data || { error: 'Hub communication failed' });
+    }
+});
+
+// 5c. Revoke Consent
+>>>>>>> Stashed changes
 app.delete('/api/consents/:id', async (req, res) => {
     const { id } = req.params;
     console.log(`[Adapter] DELETE /api/consents/${id} - Revoking consent`);
@@ -122,7 +139,13 @@ app.put('/api/transfers/:id/confirm-party', async (req, res) => {
     const { id } = req.params;
     console.log(`[Adapter] PUT /api/transfers/${id}/confirm-party - Confirming recipient`);
     try {
+<<<<<<< Updated upstream
         const response = await axios.put(`${HUB_URL}/transfers/${id}/confirm-party`);
+=======
+        const response = await axios.put(`${HUB_URL}/transfers/${id}/confirm-party`, {}, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+>>>>>>> Stashed changes
         console.log(`[Adapter] Recipient confirmed for transfer ${id}`);
         res.json(response.data);
     } catch (err) {
@@ -136,7 +159,13 @@ app.put('/api/transfers/:id/confirm-quote', async (req, res) => {
     const { id } = req.params;
     console.log(`[Adapter] PUT /api/transfers/${id}/confirm-quote - Confirming quote and executing`);
     try {
+<<<<<<< Updated upstream
         const response = await axios.put(`${HUB_URL}/transfers/${id}/confirm-quote`);
+=======
+        const response = await axios.put(`${HUB_URL}/transfers/${id}/confirm-quote`, {}, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+>>>>>>> Stashed changes
         console.log(`[Adapter] Transfer ${id} executed successfully`);
         res.json(response.data);
     } catch (err) {
